@@ -185,7 +185,13 @@ def train_model(model_name: str):
     logger.info(f"Total training samples: {X.shape[0]} (Balanced!)")
     
     dataset = TensorDataset(torch.tensor(X, dtype=torch.float32), torch.tensor(y, dtype=torch.float32).unsqueeze(1))
-    dataloader = DataLoader(dataset, batch_size=256, shuffle=True)
+    
+    val_split = int(0.2 * len(dataset))
+    train_split = len(dataset) - val_split
+    train_data, val_data = torch.utils.data.random_split(dataset, [train_split, val_split])
+    
+    train_loader = DataLoader(train_data, batch_size=256, shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=256, shuffle=False)
 
     model = WakeWordModel().to(device)
     criterion = nn.BCELoss()
@@ -195,9 +201,9 @@ def train_model(model_name: str):
     epochs = 22
     for epoch in range(epochs):
         model.train()
-        total_loss, correct, total = 0, 0, 0
+        train_loss, correct, total = 0, 0, 0
         
-        for batch_x, batch_y in dataloader:
+        for batch_x, batch_y in train_loader:
             batch_x, batch_y = batch_x.to(device), batch_y.to(device)
             optimizer.zero_grad()
             outputs = model(batch_x)
@@ -205,11 +211,25 @@ def train_model(model_name: str):
             loss.backward()
             optimizer.step()
             
-            total_loss += loss.item()
+            train_loss += loss.item()
             correct += ((outputs > 0.5).float() == batch_y).sum().item()
             total += batch_y.size(0)
-            
-        logger.info(f"Epoch [{epoch+1}/{epochs}] - Loss: {total_loss/len(dataloader):.4f} - Acc: {100 * correct / total:.2f}%")
+        
+        train_acc = 100 * correct / total
+        
+        model.eval()
+        val_loss, val_correct, val_total = 0, 0, 0
+        with torch.no_grad():
+            for batch_x, batch_y in val_loader:
+                batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+                outputs = model(batch_x)
+                loss = criterion(outputs, batch_y)
+                val_loss += loss.item()
+                val_correct += ((outputs > 0.5).float() == batch_y).sum().item()
+                val_total += batch_y.size(0)
+        
+        val_acc = 100 * val_correct / val_total
+        logger.info(f"Epoch [{epoch+1}/{epochs}] - Loss: {train_loss/len(train_loader):.4f} - Acc: {train_acc:.2f}% | Val Loss: {val_loss/len(val_loader):.4f} - Val Acc: {val_acc:.2f}%")
 
     model.eval()
     dummy_input = torch.randn(1, 16, 96, device=device)
