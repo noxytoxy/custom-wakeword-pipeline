@@ -17,12 +17,10 @@ dependencies = [
     "torchaudio",
     "openwakeword",
     "soundfile",
-    "librosa",
     "audiomentations",
     "numpy",
     "pyaudio",
     "onnx",
-    "omegaconf"
 ]
 
 [project.urls]
