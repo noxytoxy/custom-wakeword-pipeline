@@ -167,15 +167,22 @@ def train_model(model_name: str):
     
     logger.info("Loading background noise features...")
     X_bg_raw = np.load("background_features.npy")
-    # Take 12000 random samples from background noise
-    starts = np.random.choice(X_bg_raw.shape[0] - 16, 12000, replace=False)
+    
+    bg_samples = min(len(X_pos) * 4, 12000)
+    starts = np.random.choice(X_bg_raw.shape[0] - 16, bg_samples, replace=False)
     X_bg = np.stack([X_bg_raw[s : s + 16] for s in starts])
     y_bg = np.zeros(len(X_bg), dtype=np.float32)
+    
+    total_negs = len(X_neg) + len(X_bg)
+    if len(X_pos) > 0:
+        oversample_factor = max(1, total_negs // len(X_pos))
+        X_pos = np.repeat(X_pos, oversample_factor, axis=0)
+        y_pos = np.repeat(y_pos, oversample_factor, axis=0)
 
     X = np.concatenate([X_pos, X_neg, X_bg], axis=0)
     y = np.concatenate([y_pos, y_neg, y_bg], axis=0)
     
-    logger.info(f"Total training samples: {X.shape[0]}")
+    logger.info(f"Total training samples: {X.shape[0]} (Balanced!)")
     
     dataset = TensorDataset(torch.tensor(X, dtype=torch.float32), torch.tensor(y, dtype=torch.float32).unsqueeze(1))
     dataloader = DataLoader(dataset, batch_size=256, shuffle=True)
