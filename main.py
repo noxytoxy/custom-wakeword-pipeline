@@ -130,6 +130,9 @@ def train_model(model_name: str):
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"Starting training on device: {device}")
+
+    torch.manual_seed(42)
+    np.random.seed(42)
     
     extractor = AudioFeatures(device=str(device))
     
