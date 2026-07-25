@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "custom-wakeword-pipeline"
+version = "1.0.0"
+description = "End-to-end pipeline for generating datasets and training custom wake word models using openWakeWord."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Maxim Budyakov", email = "77797621+noxytoxy@users.noreply.github.com"}
+]
+dependencies = [
+    "torch",
+    "torchaudio",
+    "openwakeword",
+    "soundfile",
+    "librosa",
+    "audiomentations",
+    "numpy",
+    "pyaudio",
+    "onnx",
+    "omegaconf"
+]
+
+[project.urls]
+Homepage = "https://github.com/noxytoxy/custom-wakeword-pipeline"
