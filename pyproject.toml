@@ -21,7 +21,6 @@ dependencies = [
     "numpy",
     "pyaudio",
     "onnx",
-    "omegaconf",
 ]
 
 [project.urls]
