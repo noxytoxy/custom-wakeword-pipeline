@@ -139,7 +139,7 @@ def train_model(model_name: str):
             y = (y * 32767).astype(np.int16)
         
         if len(y) > TARGET_SAMPLES:
-            y = y[-TARGET_SAMPLES:]
+            y = y[:TARGET_SAMPLES]
         elif len(y) < TARGET_SAMPLES:
             pad_length = TARGET_SAMPLES - len(y)
             pad_after = np.random.randint(0, min(3200, pad_length + 1))
