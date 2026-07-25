@@ -32,7 +32,6 @@ class WakeWordModel(nn.Module):
             nn.ReLU(),
             nn.Dropout(0.2),
             nn.Linear(64, 1),
-            nn.Sigmoid()
         )
         
     def forward(self, x):
@@ -173,22 +172,19 @@ def train_model(model_name: str):
     X_bg = np.stack([X_bg_raw[s : s + 16] for s in starts])
     y_bg = np.zeros(len(X_bg), dtype=np.float32)
     
-    total_negs = len(X_neg) + len(X_bg)
-    if len(X_pos) > 0:
-        oversample_factor = max(1, total_negs // len(X_pos))
-        X_pos = np.repeat(X_pos, oversample_factor, axis=0)
-        y_pos = np.repeat(y_pos, oversample_factor, axis=0)
-
     X = np.concatenate([X_pos, X_neg, X_bg], axis=0)
     y = np.concatenate([y_pos, y_neg, y_bg], axis=0)
-    
-    logger.info(f"Total training samples: {X.shape[0]} (Balanced!)")
+
+    neg_count = len(X_neg) + len(X_bg)
+    pos_count = len(X_pos)
+    logger.info(f"Training samples: {pos_count} positive, {neg_count} negative")
     
     dataset = TensorDataset(torch.tensor(X, dtype=torch.float32), torch.tensor(y, dtype=torch.float32).unsqueeze(1))
     dataloader = DataLoader(dataset, batch_size=256, shuffle=True)
 
     model = WakeWordModel().to(device)
-    criterion = nn.BCELoss()
+    pos_weight = torch.tensor([neg_count / max(pos_count, 1)], device=device)
+    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     logger.info("Beginning training loop...")
@@ -206,7 +202,8 @@ def train_model(model_name: str):
             optimizer.step()
             
             total_loss += loss.item()
-            correct += ((outputs > 0.5).float() == batch_y).sum().item()
+            probs = torch.sigmoid(outputs)
+            correct += ((probs > 0.5).float() == batch_y).sum().item()
             total += batch_y.size(0)
             
         logger.info(f"Epoch [{epoch+1}/{epochs}] - Loss: {total_loss/len(dataloader):.4f} - Acc: {100 * correct / total:.2f}%")
