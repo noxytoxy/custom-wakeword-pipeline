@@ -123,7 +123,7 @@ def download_dependencies():
     openwakeword.utils.download_models()
 
 
-def train_model(model_name: str):
+def train_model(model_name: str, epochs: int = 22):
     """Trains the wake word model using generated features."""
     download_dependencies()
     from openwakeword.utils import AudioFeatures
@@ -192,7 +192,6 @@ def train_model(model_name: str):
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     logger.info("Beginning training loop...")
-    epochs = 22
     for epoch in range(epochs):
         model.train()
         total_loss, correct, total = 0, 0, 0
@@ -280,6 +279,7 @@ if __name__ == "__main__":
     # Train command
     parser_train = subparsers.add_parser("train", help="Train the wake word model")
     parser_train.add_argument("--name", type=str, required=True, help="Output model name (e.g., 'jessie')")
+    parser_train.add_argument("--epochs", type=int, default=22, help="Number of training epochs (default: 22)")
 
     # Test command
     parser_test = subparsers.add_parser("test", help="Test the model via microphone")
@@ -290,6 +290,6 @@ if __name__ == "__main__":
     if args.command == "generate":
         generate_dataset(args.word, args.lang, args.adversarial)
     elif args.command == "train":
-        train_model(args.name)
+        train_model(args.name, epochs=args.epochs)
     elif args.command == "test":
         test_inference(args.model)
