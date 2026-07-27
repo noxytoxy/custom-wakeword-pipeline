@@ -26,7 +26,7 @@ dependencies = [
     "tqdm",
 ]
 [project.optional-dependencies]
-dev = ["pytest", "pre-commit"]
+dev = ["pytest", "pre-commit", "ruff"]
 
 [project.urls]
 Homepage = "https://github.com/noxytoxy/custom-wakeword-pipeline"
