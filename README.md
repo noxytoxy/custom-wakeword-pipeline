@@ -157,6 +157,15 @@ python main.py test --model "jessie.onnx" --threshold 0.4870
 - **Audio Device:** Test uses default system microphone. Check OS privacy settings if no input detected.
 - **Detection Threshold:** After training, the optimal threshold is printed. Use it with `test --threshold` for best precision-recall balance.
 
+## Development
+
+For contributors who want to run tests and linting:
+
+```bash
+pip install -e ".[dev]"
+pre-commit install  # runs ruff on every commit
+pytest              # run tests
+```
 ## Acknowledgements
 
 - Feature extraction architecture from [openWakeWord](https://github.com/dscripka/openWakeWord) by David Scripka (Apache License 2.0).

@@ -12,6 +12,16 @@ __pycache__/
 .venv/
 venv/
 env/
+*.egg-info/
+
+# Caches
+.pytest_cache/
+.ruff_cache/
+
+# Generated runtime files
+training.log
+*_best.pt
+*_metadata.json
 
 # IDEs
 .vscode/

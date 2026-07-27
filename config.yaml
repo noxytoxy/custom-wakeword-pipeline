@@ -1,0 +1,60 @@
+audio:
+  target_samples: 32000
+  sample_rate: 16000
+
+model:
+  hidden_dim: 128
+  dropout: 0.2
+
+generate:
+  positive_iterations: 500
+  negative_iterations: 30
+  phrase_iterations: 20
+  speakers_per_negative: 2
+
+augmentation:
+  pitch_shift:
+    min_semitones: -4
+    max_semitones: 4
+    probability: 0.9
+  time_stretch:
+    min_rate: 0.8
+    max_rate: 1.25
+    probability: 0.9
+  gaussian_noise:
+    min_amplitude: 0.001
+    max_amplitude: 0.015
+    probability: 0.5
+  background_noise:
+    min_snr: 10
+    max_snr: 30
+    probability: 0.7
+
+train:
+  batch_size: 256
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  max_epochs: 50
+  patience: 7
+  scheduler_patience: 3
+  scheduler_factor: 0.5
+  val_split: 0.1
+  clip_grad_norm: 1.0
+  feature_extraction_batch: 128
+  oversample: true
+  mixing:
+    bg_samples_factor: 6
+    mix_samples_factor: 3
+    alpha_min: 0.6
+    alpha_max: 0.95
+  specaugment:
+    probability: 0.5
+    time_mask_size: 3
+    freq_mask_size: 7
+  jitter:
+    probability: 0.3
+    std: 0.01
+
+logging:
+  level: INFO
+  file: training.log
