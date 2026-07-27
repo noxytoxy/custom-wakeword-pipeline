@@ -1,5 +1,6 @@
 import argparse
 import glob
+import hashlib
 import json
 import logging
 import os
@@ -147,6 +148,29 @@ def _build_augment_pipeline(noise_dir: str = "dataset/noise"):
     return Compose(transforms)
 
 
+def _gen_cache_key(word: str, lang: str, adversarial: str, phrases: str) -> str:
+    params = f"{word}|{lang}|{adversarial}|{phrases}|{json.dumps(CFG_GEN, sort_keys=True)}"
+    return hashlib.md5(params.encode()).hexdigest()
+
+
+def _gen_cache_hit(word: str, lang: str, adversarial: str, phrases: str) -> bool:
+    cache_file = "dataset/.gen_hash"
+    if not os.path.exists(cache_file):
+        return False
+    pos_files = glob.glob("dataset/positive/*.wav")
+    neg_files = glob.glob("dataset/negative/*.wav")
+    if not pos_files or not neg_files:
+        return False
+    with open(cache_file) as f:
+        stored = f.read().strip()
+    return stored == _gen_cache_key(word, lang, adversarial, phrases)
+
+
+def _gen_cache_save(word: str, lang: str, adversarial: str, phrases: str):
+    with open("dataset/.gen_hash", "w") as f:
+        f.write(_gen_cache_key(word, lang, adversarial, phrases))
+
+
 def generate_dataset(target_word: str, lang: str, adversarial_words: str, adversarial_phrases: str = ""):
     import torchaudio.transforms as T
 
@@ -156,6 +180,10 @@ def generate_dataset(target_word: str, lang: str, adversarial_words: str, advers
     neg_dir = "dataset/negative"
     os.makedirs(pos_dir, exist_ok=True)
     os.makedirs(neg_dir, exist_ok=True)
+
+    if _gen_cache_hit(target_word, lang, adversarial_words, adversarial_phrases):
+        logger.info("Dataset cache hit — generation skipped")
+        return
 
     generate_noise_files()
     augment = _build_augment_pipeline()
@@ -228,6 +256,8 @@ def generate_dataset(target_word: str, lang: str, adversarial_words: str, advers
                 except Exception as e:
                     logger.error(f"Error generating phrase negative '{phrase}': {e}")
         logger.info(f"Generated {phrase_neg_count} phrase-level negative samples.")
+
+    _gen_cache_save(target_word, lang, adversarial_words, adversarial_phrases)
 
 
 def download_dependencies():

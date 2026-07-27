@@ -3,6 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-GPU_Accelerated-ee4c2c.svg)](https://pytorch.org/)
+[![Tests](https://github.com/noxytoxy/custom-wakeword-pipeline/actions/workflows/tests.yml/badge.svg)](https://github.com/noxytoxy/custom-wakeword-pipeline/actions/workflows/tests.yml)
 
 An end-to-end, locally runnable pipeline for generating datasets, training, and testing custom wake word models for voice assistants (e.g., "Jarvis", "Jessie", "Computer").
 
@@ -13,6 +14,7 @@ Wraps [openWakeWord](https://github.com/dscripka/openWakeWord) engine and [Siler
 - **Zero-Data Start:** Synthesizes positive and adversarial negative datasets via Silero TTS (EN/RU).
 - **Audio Augmentation:** Pitch shift, time stretch, Gaussian noise, **background noise mixing** (procedural white/pink/brown noise + 60Hz hum, room tone, fan).
 - **Phrase-Level Adversarials:** Supports full-phrase negatives to reduce false positives on conversational speech.
+- **Incremental Dataset:** Same parameters → skip regeneration (MD5 cache).
 - **Robust Training:** AdamW, ReduceLROnPlateau, gradient clipping, SpecAugment on embeddings, feature-level jitter, early stopping with validation split.
 - **Post-Training Metrics:** ROC-AUC, optimal threshold via F1-maximization.
 - **ONNX Export:** Auto-export for deployment on Raspberry Pi, Home Assistant, edge devices.
@@ -149,6 +151,25 @@ python main.py test --model "jessie.onnx" --threshold 0.4870
 |----------|---------|-------------|
 | `--model` | required | Path to `.onnx` model |
 | `--threshold` | `0.5` | Detection threshold (use value from train output) |
+
+## Docker
+
+For CPU-only execution without installing Python or dependencies:
+
+```bash
+docker build -t wakeword .
+docker run --rm wakeword generate --word "Jessie"
+docker run --rm wakeword train --name "jessie"
+docker run --rm -v /dev/snd:/dev/snd --privileged wakeword test --model jessie.onnx
+```
+
+Models and dataset are written inside the container by default. To persist them on host, mount a volume:
+
+```bash
+docker run --rm -v %cd%:/app/data wakeword train --name "jessie"
+```
+
+*Note: GPU acceleration requires [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html). Microphone (`test`) needs `--privileged` and host audio device passthrough.*
 
 ## Advanced Usage / Troubleshooting
 
